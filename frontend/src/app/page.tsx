@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   Alert,
   Box,
@@ -39,10 +39,7 @@ export default function Home() {
   const [diagData, setDiagData] = useState<Record<string, unknown> | null>(null);
   const [message, setMessage] = useState<string>('');
 
-  const authHeader = useMemo(
-    () => (token ? { Authorization: 'Bearer ' + token } : {}),
-    [token],
-  );
+  const authHeader = token ? { Authorization: 'Bearer ' + token } : undefined;
 
   const login = async () => {
     const res = await fetch(`${apiBase}/api/auth/login`, {
@@ -81,9 +78,11 @@ export default function Home() {
   };
 
   const ask = async () => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = 'Bearer ' + token;
     const res = await fetch(`${apiBase}/api/chat/ask`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeader },
+      headers,
       body: JSON.stringify({ question: chatQuestion }),
     });
     if (!res.ok) {
