@@ -91,14 +91,18 @@ def build_answer(question: str) -> tuple[str, list[dict[str, Any]], float]:
             matches.append(doc)
 
     if not matches:
-        matches = list(state.documents.values())[:2]
+        return (
+            "No relevant information was found in indexed documents.",
+            [],
+            0.0,
+        )
 
     sources = [{"doc_id": doc.doc_id, "filename": doc.filename} for doc in matches[:3]]
     summary = ", ".join(src["filename"] for src in sources)
     return (
         f"Likely relevant information was found in: {summary}. Review cited sources for engineering confirmation.",
         sources,
-        0.71 if matches else 0.35,
+        0.71,
     )
 
 
