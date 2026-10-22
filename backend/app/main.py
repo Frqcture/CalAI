@@ -6,8 +6,9 @@ import re
 from typing import Any
 from uuid import uuid4
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 app = FastAPI(title="CalAI MVP API", version="0.1.0")
@@ -57,6 +58,7 @@ class AppState:
 
 
 state = AppState()
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def parse_ehb_text(text: str) -> ParsedEHB:
@@ -100,6 +102,19 @@ def build_answer(question: str) -> tuple[str, list[dict[str, Any]], float]:
     )
 
 
+def require_token(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> str:
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise HTTPException(status_code=401, detail="Missing bearer token")
+
+    token = credentials.credentials
+    username = state.tokens.get(token)
+    if username is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return username
+
+
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "calai-backend"}
@@ -133,7 +148,10 @@ def license_status() -> dict[str, Any]:
 
 
 @app.post("/api/documents/upload")
-async def upload_document(file: UploadFile = File(...)) -> dict[str, Any]:
+async def upload_document(
+    file: UploadFile = File(...),
+    _: str = Depends(require_token),
+) -> dict[str, Any]:
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in ALLOWED_UPLOAD_EXTENSIONS:
         raise HTTPException(status_code=400, detail=f"Unsupported file type: {suffix}")
@@ -153,7 +171,7 @@ async def upload_document(file: UploadFile = File(...)) -> dict[str, Any]:
 
 
 @app.get("/api/documents")
-def list_documents() -> dict[str, Any]:
+def list_documents(_: str = Depends(require_token)) -> dict[str, Any]:
     return {
         "documents": [
             {"doc_id": doc.doc_id, "filename": doc.filename}
@@ -174,7 +192,10 @@ async def parse_ehb(file: UploadFile = File(...)) -> dict[str, Any]:
 
 
 @app.post("/api/chat/ask")
-def ask_engineering_question(payload: AskRequest) -> dict[str, Any]:
+def ask_engineering_question(
+    payload: AskRequest,
+    _: str = Depends(require_token),
+) -> dict[str, Any]:
     answer, sources, confidence = build_answer(payload.question)
     return {
         "question": payload.question,
@@ -185,7 +206,10 @@ def ask_engineering_question(payload: AskRequest) -> dict[str, Any]:
 
 
 @app.get("/api/signals/{signal_name}/dependencies")
-def signal_dependencies(signal_name: str) -> dict[str, Any]:
+def signal_dependencies(
+    signal_name: str,
+    _: str = Depends(require_token),
+) -> dict[str, Any]:
     signal_key = signal_name.upper()
 
     used_by = sorted(
@@ -219,7 +243,10 @@ def signal_dependencies(signal_name: str) -> dict[str, Any]:
 
 
 @app.get("/api/diagnostics/{dtc}")
-def diagnostics_view(dtc: str) -> dict[str, Any]:
+def diagnostics_view(
+    dtc: str,
+    _: str = Depends(require_token),
+) -> dict[str, Any]:
     code = dtc.upper()
     return {
         "dtc": code,
