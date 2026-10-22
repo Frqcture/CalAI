@@ -1,0 +1,21 @@
+# Environment files
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+
+# Logs and artifacts
+*.log
+coverage/
+dist/
+
+# OS/editor
+.DS_Store
+.vscode/

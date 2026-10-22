@@ -2,11 +2,43 @@
 
 AI-powered calibration and diagnostics intelligence platform for automotive engineers.
 
-## Quick Setup
+## MVP Status
 
-1. Clone the repository.
-2. Create environment-specific files (for example, `.env`) locally.
-3. Use Docker Compose as the primary deployment method for self-hosted installations.
+This repository now contains an initial MVP implementation with:
+
+- FastAPI backend APIs for authentication, licensing status, document upload/indexing, EHB parsing, chat, signal dependencies, and diagnostics context.
+- Next.js + TypeScript + Material UI frontend dashboard for login, upload, chat, signal explorer, and diagnostics explorer.
+- Docker Compose stack with frontend, backend, PostgreSQL, Qdrant, AI service placeholder, and license service placeholder.
+
+## Setup
+
+### 1) Backend
+
+```bash
+cd /home/runner/work/CalAI/CalAI/backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### 2) Frontend
+
+```bash
+cd /home/runner/work/CalAI/CalAI/frontend
+npm install
+npm run dev
+```
+
+### 3) Full stack with Docker Compose
+
+```bash
+cd /home/runner/work/CalAI/CalAI
+docker compose up --build
+```
+
+Frontend: `http://localhost:3000`  
+Backend API docs: `http://localhost:8000/docs`
 
 ## Documentation
 
@@ -14,25 +46,6 @@ AI-powered calibration and diagnostics intelligence platform for automotive engi
 
 ## `.gitignore` Setup Guidance
 
-Add a `.gitignore` file at the repository root and include entries that prevent committing local/runtime artifacts, for example:
+A repository-level `.gitignore` is included at `/home/runner/work/CalAI/CalAI/.gitignore`.
 
-```gitignore
-# Environment files
-.env
-.env.*
-
-# Python
-__pycache__/
-*.pyc
-
-# Node
-node_modules/
-.next/
-
-# Logs and local artifacts
-*.log
-coverage/
-dist/
-```
-
-Adjust entries based on the stack components you add to the repository.
+If you need to extend it, add entries for local secrets and generated artifacts before committing.
